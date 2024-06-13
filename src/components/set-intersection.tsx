@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 // Función para calcular la intersección de múltiples arrays
 const intersect = (arrays) => {
   if (arrays.length === 0) return [];

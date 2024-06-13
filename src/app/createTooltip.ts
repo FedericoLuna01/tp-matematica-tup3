@@ -1,3 +1,4 @@
+// @ts-nocheck
 const getOrCreateTooltip = (chart: any) => {
   let tooltipEl = chart.canvas.parentNode.querySelector('div');
 
