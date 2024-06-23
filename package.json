@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.6.0",
+    "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-toast": "^1.1.5",
@@ -17,6 +18,8 @@
     "chartjs-chart-venn": "^4.3.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "file-saver": "^2.0.5",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.394.0",
     "next": "14.2.4",
     "next-themes": "^0.3.0",
@@ -28,6 +31,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { VennDiagramChart, extractSets } from "chartjs-chart-venn";
 import { ChartConfiguration, Tooltip } from "chart.js";
-import { externalTooltipHandler } from "./createTooltip";
+import html2canvas from "html2canvas";
+import { saveAs } from "file-saver";
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFieldArray, useForm } from "react-hook-form"
@@ -23,9 +24,10 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast";
 import { CircleOff, CirclePlus, Download, Trash, Undo2 } from "lucide-react";
 import { SetIntersection } from "@/components/set-intersection";
+import { externalTooltipHandler } from "./createTooltip";
 
 const FormSchema = z.object({
-  groups: z.array(
+  sets: z.array(
     z.object({
       name: z.string().min(1, { message: "El nombre del conjunto es requerido" }),
       values: z.string().min(1, { message: "Los valores del conjunto son requeridos" }),
@@ -36,6 +38,7 @@ const FormSchema = z.object({
 
 export default function Home() {
   const canvasRef = useRef(null);
+  const divRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<ChartConfiguration<'venn'>['data'] | null>(null);
   const [formattedData, setFormattedData] = useState<{ label: string, values: string[]}[]>([])
   const [backgroundColors, setBackgroundColors] = useState<string[]>([])
@@ -45,30 +48,30 @@ export default function Home() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      groups: [{
+      sets: [{
         name: '',
         values: '',
-        color: '#FFFFFF'
+        color: '#ADADAD'
       }],
     },
   })
 
   const {
-    fields: groupsFields,
-    append: appendGroup,
-    remove: removeGroup,
+    fields: setsFields,
+    append: appendset,
+    remove: removeset,
   } = useFieldArray({
-    name: "groups",
+    name: "sets",
     control: form.control,
   });
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    const formattedData = data.groups.map(group => ({
-      label: group.name,
-      values: group.values.split(',').map(value => value.trim())
+    const formattedData = data.sets.map(set => ({
+      label: set.name,
+      values: set.values.split(',').map(value => value.trim())
     }));
 
-    const formattedColors = data.groups.map(group => group.color);
+    const formattedColors = data.sets.map(set => set.color);
     const backgroundColors = formattedColors.map(color => `${color}20`);
     const borderColors = formattedColors.map(color => color);
     setBackgroundColors(backgroundColors);
@@ -122,6 +125,25 @@ export default function Home() {
     };
   }, [chartData, backgroundColors, borderColors]);
 
+  const handleDownload = async () => {
+    if (!chartData) {
+      toast({
+        title: "Error!",
+        description: "No hay datos para descargar",
+        variant: "destructive",
+      })
+      return
+    }
+    if (divRef.current) {
+      const canvas = await html2canvas(divRef.current);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          saveAs(blob, 'div-image.png');
+        }
+      });
+    }
+  };
+
   return (
     <main className="flex min-h-screen flex-col lg:flex-row container pt-20">
       <div className="w-full lg:w-1/2">
@@ -130,14 +152,14 @@ export default function Home() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full lg:w-2/3 my-4">
       <div className="space-y-6">
         {
-          groupsFields.map((group, index) => (
-            <div key={group.id} className="space-y-2">
+          setsFields.map((set, index) => (
+            <div key={set.id} className="space-y-2">
               <div
                 className="flex gap-2"
               >
                 <FormField
                   control={form.control}
-                  name={`groups.${index}.name`}
+                  name={`sets.${index}.name`}
                   render={({ field }) => (
                     <FormItem
                       className="w-full"
@@ -152,7 +174,7 @@ export default function Home() {
                 />
                 <FormField
                   control={form.control}
-                  name={`groups.${index}.color`}
+                  name={`sets.${index}.color`}
                   render={({ field }) => (
                     <FormItem
                     >
@@ -167,7 +189,7 @@ export default function Home() {
               </div>
               <FormField
                 control={form.control}
-                name={`groups.${index}.values`}
+                name={`sets.${index}.values`}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Valores</FormLabel>
@@ -182,7 +204,7 @@ export default function Home() {
                 )}
               />
               <Button variant='destructive' type='button' onClick={() => {
-                if (groupsFields.length === 1) {
+                if (setsFields.length === 1) {
                   toast({
                     title: "Error!",
                     description: "No se pueden eliminar todos los conjuntos",
@@ -190,7 +212,7 @@ export default function Home() {
                   })
                   return
                 }
-                removeGroup(index)
+                removeset(index)
               }}>
                 <Trash className="mr-2 w-5 h-5" />
                 Eliminar conjunto
@@ -203,7 +225,7 @@ export default function Home() {
         className="my-4"
         type='button'
         onClick={() => {
-          if (groupsFields.length >= 5) {
+          if (setsFields.length >= 5) {
             toast({
               title: "Error!",
               description: "No se pueden agregar más de 5 conjuntos",
@@ -211,7 +233,7 @@ export default function Home() {
             })
             return
           }
-          appendGroup({ name: '', values: '' })
+          appendset({ name: '', values: '', color: '#ADADAD' })
         }}>
           <CirclePlus className="mr-2 w-5 h-5"/>
           Agregar conjunto
@@ -230,6 +252,7 @@ export default function Home() {
         <Button
           size='icon'
           variant='outline'
+          onClick={handleDownload}
         >
           <Download />
         </Button>
@@ -242,7 +265,7 @@ export default function Home() {
         </Button>
       </div>
       </div>
-        <div className="mt-6 border border-border rounded-md p-6 h-[50vh] flex items-center justify-center">
+        <div ref={divRef} className="mt-6 border border-border rounded-md p-6 h-[50vh] flex items-center justify-center">
           {
             chartData ? (
               <canvas width={400} height={250} ref={canvasRef} id="canvas"></canvas>
@@ -259,10 +282,6 @@ export default function Home() {
         </div>
         <div className="my-6">
         <SetIntersection data={formattedData} />
-          {/* <h2>Intersecciones: </h2>
-          <div>
-
-          </div> */}
         </div>
       </div>
     </main>
