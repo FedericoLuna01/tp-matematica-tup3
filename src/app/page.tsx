@@ -40,7 +40,6 @@ export default function Home() {
   const canvasRef = useRef(null);
   const divRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<ChartConfiguration<'venn'>['data'] | null>(null);
-  const [formattedData, setFormattedData] = useState<{ label: string, values: string[]}[]>([])
   const [backgroundColors, setBackgroundColors] = useState<string[]>([])
   const [borderColors, setBorderColors] = useState<(string | undefined)[]>([])
   const { toast } = useToast()
@@ -77,9 +76,11 @@ export default function Home() {
     setBackgroundColors(backgroundColors);
     setBorderColors(borderColors);
 
-    setFormattedData(formattedData);
     const extractedData = extractSets(formattedData);
     setChartData(extractedData);
+    console.log({
+      extractedData,
+    })
     // Scroll to the canvas
     window.scrollTo({
       top: 0,
@@ -281,7 +282,31 @@ export default function Home() {
           }
         </div>
         <div className="my-6">
-        <SetIntersection data={formattedData} />
+          {
+            chartData && (
+              <div>
+                <h2
+                  className="text-2xl font-bold"
+                >
+                  Datos
+                </h2>
+                {
+                  chartData.datasets[0].data.map((
+                    data: { label: string; value: number, values: string[] },
+                    index: number
+                  ) => {
+                    const values = data.values.join(', ')
+                    return (
+                      <div key={index}>
+                        <p>{data.label}: {" "} { values }</p>
+                      </div>
+                    )
+                  })
+                }
+              </div>
+            )
+          }
+        {/* <SetIntersection data={formattedData} /> */}
         </div>
       </div>
     </main>
